@@ -3,13 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Random GIF Viewer</title>
+    <title>GIF Viewer - GIPHY API</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>Random GIF Viewer</h1>
-        <button id="getGifBtn">Get Random GIF</button>
+        <h1>GIF Viewer</h1>
+        
+        <div class="controls">
+            <input type="text" id="searchInput" placeholder="Search for GIFs...">
+            <button id="searchBtn">Search</button>
+            <button id="randomBtn">Random GIF</button>
+        </div>
+        
         <div id="gifContainer"></div>
     </div>
     <script src="script.js"></script>

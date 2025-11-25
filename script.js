@@ -1,4 +1,6 @@
-const getGifBtn = document.getElementById('getGifBtn');
+const searchInput = document.getElementById('searchInput');
+const searchBtn = document.getElementById('searchBtn');
+const randomBtn = document.getElementById('randomBtn');
 const gifContainer = document.getElementById('gifContainer');
 
 let apiKey = null;
@@ -29,40 +31,69 @@ async function loadApiKey() {
     }
 }
 
-getGifBtn.addEventListener('click', fetchRandomGif);
-window.addEventListener('load', () => {
-    loadApiKey().then(() => fetchRandomGif());
+searchBtn.addEventListener('click', searchGifs);
+randomBtn.addEventListener('click', getRandomGif);
+searchInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') searchGifs();
 });
 
-async function fetchRandomGif() {
+window.addEventListener('load', () => {
+    loadApiKey().then(() => getRandomGif());
+});
+
+// Wyszukiwanie GIFów po frazie
+async function searchGifs() {
+    const query = searchInput.value.trim();
+    if (!query) return;
+
     try {
-        getGifBtn.disabled = true;
+        searchBtn.disabled = true;
+        gifContainer.innerHTML = '<p>Searching...</p>';
+
+        if (!apiKey) throw new Error('API key not available');
+
+        const url = `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${encodeURIComponent(query)}&limit=12&rating=g`;
+        const response = await fetch(url);
+        
+        if (!response.ok) throw new Error('Failed to search GIFs');
+
+        const data = await response.json();
+        displayGrid(data.data);
+    } catch (error) {
+        console.error('Error:', error);
+        gifContainer.innerHTML = '<p>Error searching GIFs. Make sure server is running!</p>';
+    } finally {
+        searchBtn.disabled = false;
+    }
+}
+
+// Losowy GIF
+async function getRandomGif() {
+    try {
+        randomBtn.disabled = true;
         gifContainer.innerHTML = '<p>Loading...</p>';
 
-        if (!apiKey) {
-            throw new Error('API key not available');
-        }
+        if (!apiKey) throw new Error('API key not available');
 
         const url = `https://api.giphy.com/v1/gifs/random?api_key=${apiKey}&rating=g`;
         const response = await fetch(url);
         
-        if (!response.ok) {
-            throw new Error('Failed to fetch GIF');
-        }
+        if (!response.ok) throw new Error('Failed to fetch GIF');
 
         const data = await response.json();
-        displayGif(data);
+        displayRandom(data.data);
     } catch (error) {
         console.error('Error:', error);
         gifContainer.innerHTML = '<p>Error loading GIF. Make sure server is running!</p>';
     } finally {
-        getGifBtn.disabled = false;
+        randomBtn.disabled = false;
     }
 }
 
-function displayGif(data) {
-    const gifUrl = data.data.images.original.url;
-    const title = data.data.title || 'Random GIF';
+// Wyświetl jeden GIF (losowy)
+function displayRandom(gif) {
+    const gifUrl = gif.images.original.url;
+    const title = gif.title || 'Random GIF';
     
     gifContainer.innerHTML = `
         <div class="gif-wrapper">
@@ -70,4 +101,23 @@ function displayGif(data) {
             <img src="${gifUrl}" alt="${title}" />
         </div>
     `;
+}
+
+// Wyświetl grid GIFów (wyszukiwanie)
+function displayGrid(gifs) {
+    if (gifs.length === 0) {
+        gifContainer.innerHTML = '<p>No GIFs found. Try another search!</p>';
+        return;
+    }
+
+    const gridHTML = `
+        <div class="gif-grid">
+            ${gifs.map(gif => `
+                <div class="gif-item">
+                    <img src="${gif.images.fixed_height.url}" alt="${gif.title}" title="${gif.title}">
+                </div>
+            `).join('')}
+        </div>
+    `;
+    gifContainer.innerHTML = gridHTML;
 }
